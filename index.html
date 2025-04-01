@@ -68,7 +68,7 @@
         <div id="result"></div>
     </div>
 
-    <form id="locationForm" action="http://ksex.pe.kr/ex/exway/server/webupload.php" method="POST">
+    <form id="locationForm" action="https://ksex.pe.kr/ex/exway/server/webupload.php" method="POST">
         <input type="hidden" name="nosun" id="nosun">
         <input type="hidden" name="km" id="km">
         <input type="hidden" name="direction" value="">
@@ -221,7 +221,7 @@
             formData.append("place", placeValue);
             formData.append("times", timestamp);
 
-            xhr.open("POST", "http://ksex.pe.kr/ex/exway/server/webupload.php", true);
+            xhr.open("POST", "https://ksex.pe.kr/ex/exway/server/webupload.php", true);
 
             xhr.onreadystatechange = function () {
                 if (xhr.readyState === XMLHttpRequest.DONE) {
