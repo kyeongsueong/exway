@@ -68,12 +68,16 @@
         <div id="result"></div>
     </div>
 
-    <form id="locationForm" action="https://ksex.pe.kr/ex/exway/server/webupload.php" method="POST">
+    <form id="locationForm" action="http://ksex.pe.kr/ex/exway/server/webupload.php" method="POST">
         <input type="hidden" name="nosun" id="nosun">
         <input type="hidden" name="km" id="km">
         <input type="hidden" name="direction" value="">
         <input type="hidden" name="place" id="place">
         <input type="hidden" name="times" id="times">
+        <input type="hidden" name="late" id="late">
+        <input type="hidden" name="long" id="long">
+        <input type="hidden" name="late2" id="late2">
+        <input type="hidden" name="long2" id="long2">
         <button type="submit" id="submitButton" style="display: none;">전송</button>
     </form>
 
@@ -99,6 +103,19 @@
             }
         });
 
+        function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+            const R = 6371; // 지구 반지름 (킬로미터)
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = 
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c; // 거리(km) 반환
+        }
+
+
         // 위치 성공 시
         function showPosition(position){
             const userLatitude = position.coords.latitude; // 사용자 위도 정의
@@ -115,49 +132,44 @@
             for (let key in resultData) {
                 const point = resultData[key];
 
-                // "정보없음" 체크 및 숫자 변환
                 let pointLatitude = point.x;
                 let pointLongitude = point.y;
 
-                // "정보없음"인 경우 무시
+                // 유효성 검사
                 if (pointLatitude === "정보없음" || pointLongitude === "정보없음" || 
                     pointLatitude === null || pointLatitude === undefined || 
                     pointLongitude === null || pointLongitude === undefined) {
                     console.warn(`Point ${key} has invalid or missing coordinates: Latitude=${pointLatitude}, Longitude=${pointLongitude}`);
-                    continue; // 이 데이터 무시
+                    continue;
                 }
 
-                // 문자열을 숫자로 변환 (필요한 경우)
                 pointLatitude = Number(pointLatitude);
                 pointLongitude = Number(pointLongitude);
 
-                // NaN 체크
                 if (isNaN(pointLatitude) || isNaN(pointLongitude)) {
                     console.warn(`Point ${key} has non-numeric coordinates: Latitude=${pointLatitude}, Longitude=${pointLongitude}`);
-                    continue; // 숫자가 아닌 경우 무시
+                    continue;
                 }
 
-                // 유클리드 거리 계산
-                const distance = Math.sqrt(
-                    Math.pow(pointLatitude - userLatitude, 2) + 
-                    Math.pow(pointLongitude - userLongitude, 2)
-                );
+                // 실제 거리 계산
+                const distance = getDistanceFromLatLonInKm(userLatitude, userLongitude, pointLatitude, pointLongitude);
 
-                // 가장 짧은 거리 업데이트
                 if (distance < minDistance) {
                     minDistance = distance;
                     closestPoint = point;
                 }
             }
 
-            // 가장 가까운 지점 정보 추가 표시
+            // 결과 출력
             if (closestPoint) {
+                console.log(closestPoint);
+
                 resultDiv.innerHTML += `<br><br>노선: ${closestPoint.name || "정보없음"}
                 <br>이정: ${closestPoint.km} km
-                <br>관리지사: ${closestPoint.place2 || "정보없음"}`;
-                //send_data(closestPoint.name, closestPoint.km, closestPoint.place2);
-                sendFormDataWithXHR(closestPoint.name, closestPoint.km, closestPoint.place2)
-
+                <br>관리지사: ${closestPoint.place2 || "정보없음"}
+                <br>거리: ${minDistance.toFixed(2)} km`;
+                
+                send_data(closestPoint.name, closestPoint.km, closestPoint.place2, userLatitude, userLongitude, closestPoint.x, closestPoint.y);
             } else {
                 resultDiv.innerHTML += '<br>유효한 가까운 위치를 찾을 수 없습니다.';
             }
@@ -181,8 +193,8 @@
             resultDiv.style.display = 'block';
             resultDiv.className = 'error';
         }
-        /*
-        function send_data(nosun, km, place) {
+        
+        function send_data(nosun, km, place, userLatitude, userLongitude, userLatitude2, userLongitude2) {
             const now = new Date();
             const year = now.getFullYear();
             const month = String(now.getMonth() + 1).padStart(2, '0'); // 두 자리 숫자로 변환
@@ -196,12 +208,16 @@
             document.getElementById("km").value = km;
             document.getElementById("place").value = place;
             document.getElementById("times").value = timestamp;
+            document.getElementById("late").value = userLatitude;
+            document.getElementById("long").value = userLongitude;
+            document.getElementById("late2").value = userLatitude2;
+            document.getElementById("long2").value = userLongitude2;
 
             // 폼 자동 제출
             document.getElementById("locationForm").submit();
         }
-        */
-
+        
+/*
         function sendFormDataWithXHR(nosunValue, kmValue, placeValue) {
             const now = new Date();
             const year = now.getFullYear();
@@ -237,6 +253,7 @@
 
             xhr.send(formData);
         }
+            */
     </script>
 </body>
 </html>
